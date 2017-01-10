@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import render_template, redirect, request, url_for, flash
+from flask import render_template, redirect, request, url_for, flash, g
 from flask_login import login_user, logout_user, login_required, current_user
 from . import auth
 from .. import db
@@ -7,6 +7,7 @@ from ..models import User
 from ..email import send_email
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, \
     PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm
+from ..main.forms import SearchForm
 
 ################################################################################################################
 # First of all, is_anonymous() and is_authenticated() are each other's inverse.
@@ -29,7 +30,8 @@ def before_request():
     is_authenticated() must return True if the user has login credentials or False otherwise;
     From a blueprint, the before_request hook applies only to requests that belong to the blueprint."""
     if current_user.is_authenticated:
-        current_user.ping()                                  # 更新数据库User模型的last_seen属性
+        current_user.ping()                                  # [IMP] 更新数据库User模型的last_seen属性
+        g.search_form = SearchForm()                         # [IMP] 创建搜索表单对象并使得其对所有模版可用,存放在全局变量g中
         if not current_user.confirmed \
             and request.endpoint[:5] != 'auth.' \
             and request.endpoint != 'static':
@@ -52,7 +54,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         # 用户名和密码验证正确:
         if user and user.verify_password(form.password.data):
-            login_user(user, form.remember_me.data)          # flask-login提供的函数
+            login_user(user, form.remember_me.data)          # form.remember_me.data标记是否remember_mes;flask-login提供login_user()函数
             # 重定向到[1]用户未登录前试图访问的页面(需登录页面)
             # 或者   [2]首页
             return redirect(request.args.get('next') or url_for('main.index'))

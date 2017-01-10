@@ -10,6 +10,9 @@ import bleach
 from . import db, login_manager                 # 从app文件夹中的__init__.py中导入, login_manager供装饰器使用
 from app.exceptions import ValidationError      # cwd是flasky_social_blogging文件夹
 
+from whoosh.analysis import StemmingAnalyzer, SimpleAnalyzer
+from jieba.analyse import ChineseAnalyzer
+
 
 class Permission:
     """使用不同权限组合定义角色的整体权限赋值(转为2进制,按位运算,管理员权限8个位上都为1);
@@ -351,6 +354,9 @@ class Post(db.Model):
     """用户发表的博客文章;
     博客文章的html代码缓存在body_html字段中,避免重复转换"""
     __tablename__ = 'posts'
+    __searchable__ = ['body', ]          # __searchable__包含所有将被搜索且建立索引的字段(will be indexed by whoosh)
+    __analyzer__ = ChineseAnalyzer()     # 设置对于Post进行whoosh搜索的分析器(用于分词);若这里不设置则使用config.py中的全局默认设置
+
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
     body_html = db.Column(db.Text)
@@ -408,6 +414,9 @@ class Post(db.Model):
             raise ValidationError('post does not have a body')  # 由api模块中的error handler处理(400, bad_request) [IMP]
         return Post(body=body)
 
+    def __repr__(self):
+        return '<Post %r>' % self.body
+
 
 # on_changed_body函数注册在Post.body字段上,是SQLAlchemy"set"事件的监听程序,
 # 这意味着只要这个类实例的body字段设了新值(receive a scalar set event;某类的某个属性进行set操作),函数就会自动被调用
@@ -455,6 +464,8 @@ class Comment(db.Model):
             raise ValidationError('comment does not have a body')
         return Comment(body=body)
 
+    def __repr__(self):
+        return '<Comment %r>' % self.body
 
 db.event.listen(Comment.body, 'set', Comment.on_changed_body)
 

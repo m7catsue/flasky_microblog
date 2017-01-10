@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 from flask import render_template, redirect, url_for, flash, abort, \
-    request, current_app, make_response
+    request, current_app, make_response, g
 from flask_login import login_required, current_user
 from flask_sqlalchemy import get_debug_queries
+from flask_whooshalchemyplus import index_one_record  # 创建Post实例后对其进行index_one_record()操作 [IMP]
 from . import main
-from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm, SearchForm
 from .. import db
 from ..models import User, Role, Permission, Post, Comment
 from ..decorators import admin_required, permission_required
 
 
 #################################################################################################################
-
+# 测试部分使用
 
 @main.after_app_request                                                 # 在视图函数处理完请求之后执行
 def after_request(response):
@@ -51,6 +52,7 @@ def index():
                     author=current_user._get_current_object())  # current_user._get_current_object():这个对象的表现类似用户对象,
         db.session.add(post)                                    # 但实际上却是一个轻度包装,包含真正的用户对象;数据库需要真正的用户对象,
         db.session.commit()                                     # 因此要调用_get_current_object()方法
+        index_one_record(post)                                  # [IMP] index新创建的Post实例,否则无法被搜索到?
         return redirect(url_for('.index'))
     page = request.args.get('page', 1, type=int)                        # 渲染的页数从request.args中获取
     show_followed = False                                               # 若未指定,则默认为1;type=int保证参数无法转换为整数时,返回默认值(1)
@@ -305,6 +307,9 @@ def moderate_disable(id):
                             page=request.args.get('page', 1, type=int)))       # 进行评论管理操作后,重定向到'.moderate'
 
 
+#################################################################################################################
+
+
 @main.route('/delete-post/<int:id>')
 @login_required
 @permission_required(Permission.WRITE_ARTICLES)
@@ -339,4 +344,30 @@ def delete_comment(id):
     else:                                                                      # 当前用户没有相应权限
         flash("You don't have permission to delete the comment.")
         return redirect(url_for('main.index'))
+
+
+@main.route('/search', methods=['POST'])
+@login_required
+def search():
+    """<新增自定义功能> 处理用户的搜索请求;
+    request.path表示当前页面路径(i.e. /search);
+    search_form保存在全局变量g中,由@auth.before_app_request设置;
+    搜索工作不在这里直接做的原因还是担心用户无意中触发了刷新，这样会导致表单数据被重复提交"""
+    if not g.search_form.validate_on_submit():
+        return redirect(url_for('main.index'))
+    return redirect(url_for('main.search_results', query=g.search_form.search.data))
+
+
+@main.route('/search-results/<query>')
+@login_required
+def search_results(query):
+    """<新增自定义功能> 处理用户的搜索请求,返回搜索结果;
+    whoosh_search()和paginate()连用已达到对搜索结果的分页效果"""
+    page = request.args.get('page', 1, type=int)                               # 设置pagination的默认起始位置
+    pagination = Post.query.whoosh_search(query).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
+    searched_posts = pagination.items
+    return render_template('search_results.html', pagination=pagination,
+                           query=query, posts=searched_posts)                  # 需要使用_posts.html模板,所以需传入posts参数
 

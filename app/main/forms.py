@@ -61,3 +61,7 @@ class CommentForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
+class SearchForm(FlaskForm):
+    """用户对Post进行文本搜索的表单(位于导航栏)"""
+    search = StringField('Search', validators=[DataRequired()])
+

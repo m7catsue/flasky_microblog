@@ -5,38 +5,38 @@
 #                            'v': number of command-line arguments is variable;
 #                            'p': use the PATH environment variable to locate the program file.
 
-import os                                                  # 覆盖检测(检查测试的代码覆盖率)的设置
+import os                                                   # 覆盖检测(检查测试的代码覆盖率)的设置
 COV = None
-if os.environ.get('FLASKY_COVERAGE'):                      # 若未设置环境变量,返回None,不执行if下面的语句 (COV为None)
+if os.environ.get('FLASKY_COVERAGE'):                       # 若未设置环境变量,返回None,不执行if下面的语句 (COV为None)
     import coverage
-    COV = coverage.coverage(branch=True, include='app/*')  # 参数branch:检查条件语句的True和False分支是否都执行;
-    COV.start()                                            # 参数include:设置进行覆盖检测的范围
-                                                           # 仅对app文件夹中的代码;若不指定include则所有代码都会包含进来,包括venv和tests等
+    COV = coverage.coverage(branch=True, include='app/*')   # 参数branch:检查条件语句的True和False分支是否都执行;
+    COV.start()                                             # 参数include:设置进行覆盖检测的范围
+                                                            # 仅对app文件夹中的代码;若不指定include则所有代码都会包含进来,包括venv和tests等
 
 import subprocess
-from app import create_app, db                             # relative import:从app文件夹中的__init__.py中导入create_app, db
+from app import create_app, db                              # relative import:从app文件夹中的__init__.py中导入create_app, db
 from app.models import User, Role, Permission, Post, Comment
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
-app = create_app(os.getenv('FLASK_CONFIG') or 'default')   # 通过工厂函数创建app,
-manager = Manager(app)                                     # 之后初始化Flask-Script, Flask-Migrate和为Python shell定义的上下文
+app = create_app(os.getenv('FLASK_CONFIG') or 'default')    # 通过工厂函数创建app,之后初始化Flask-Script, Flask-Migrate和为Python shell定义的上下文
+manager = Manager(app)
 migrate = Migrate(app, db)
 
 
 def make_shell_context():
-    return dict(app=app, db=db, User=User,                 # [IMP] 新增加数据库模型后,需在此加入新模型
+    return dict(app=app, db=db, User=User,                  # [IMP] 新增加数据库模型后,需在此加入新模型
                 Role=Role, Permission=Permission,
                 Post=Post, Comment=Comment)
 manager.add_command("shell", Shell(make_context=make_shell_context))
-manager.add_command('db', MigrateCommand)                  # MigrateCommand类连接flask-migrate和flask-script的manager对象
+manager.add_command('db', MigrateCommand)                   # MigrateCommand类连接flask-migrate和flask-script的manager对象
 
 
 @manager.command
-def test(coverage=False):                                       # 函数名(test)即是命令名:python manage.py test进行单元测试;或python manage.py test --coverage
+def test(coverage=False):                                   # 函数名(test)即是命令名:python manage.py test进行单元测试;或python manage.py test --coverage
     """Run the unit tests;包括执行覆盖检测"""
-    if coverage and not os.environ.get('FLASKY_COVERAGE'):      # cmd-line参数传入coverage参数,但环境变量未设置
-        import sys                                              # 设置FLASKY-COVERAGE环境变量;重新启动manage.py;此时COV会依照脚本顶端进行设置
+    if coverage and not os.environ.get('FLASKY_COVERAGE'):  # cmd-line参数传入coverage参数,但环境变量未设置
+        import sys                                          # 设置FLASKY-COVERAGE环境变量;重新启动manage.py;此时COV会依照脚本顶端进行设置
         os.environ['FLASKY_COVERAGE'] = '1'
         if sys.platform == 'win32':
             # 若传入subprocess.Popen()的args是一个seq,则默认seq中的第一个item为'运行的程序';若args是string,则依据platform执行之

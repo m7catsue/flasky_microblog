@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
+from whoosh.analysis import StemmingAnalyzer, SimpleAnalyzer
+from jieba.analyse import ChineseAnalyzer
 
 basedir = os.path.abspath(os.path.dirname(__file__))                      # 当前文件(config.py)所在文件夹的绝对路径
 
@@ -14,9 +16,9 @@ class Config:
     # UserWarning: SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and
     # will be disabled by default in the future. Set it to True to suppress this warning.
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_RECORD_QUERIES = True                                       # 启用缓慢查询记录功能的配置(FLASKY_SLOW_DB_QUERY_TIME=0.5)
+    SQLALCHEMY_RECORD_QUERIES = True                            # 启用缓慢查询记录功能的配置(FLASKY_SLOW_DB_QUERY_TIME=0.5)
 
-    MAIL_SERVER = 'smtp.qq.com'                                            # 由于GFW使用qq邮箱
+    MAIL_SERVER = 'smtp.qq.com'                                 # 由于GFW使用qq邮箱
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'm7catsue@qq.com'
@@ -29,8 +31,10 @@ class Config:
     FLASKY_COMMENTS_PER_PAGE = 30
     FLASKY_SLOW_DB_QUERY_TIME = 0.5
 
-    @staticmethod            # behave like plain functions except that you can call them from an instance or the class
-    def init_app(app):       # staticmethods are used to group functions which have some logical connection to a class
+    WHOOSH_ANALYZER = ChineseAnalyzer()                        # 设置whoosh搜索引擎的默认分析器(用于分词)
+
+    @staticmethod           # behave like plain functions except that you can call them from an instance or the class
+    def init_app(app):      # staticmethods are used to group functions which have some logical connection to a class
         pass
 
 
@@ -39,17 +43,22 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
+    WHOOSH_BASE = os.path.join(basedir, 'search-dev')   # [IMP] set location for the whoosh index (指向文件夹search-dev)
+
 
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
+    WHOOSH_BASE = os.path.join(basedir, 'search-test')
     WTF_CSRF_ENABLED = False                    # flask-wtf生成的表单中包含一个隐藏字段,其内容是CSRF令牌,需要和表单中数据一起提交;
                                                 # 在测试中为了避免处理CSRF令牌这一繁琐操作,在测试配置中禁止CSRF保护功能
+
 
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+    WHOOSH_BASE = os.path.join(basedir, 'search')
 
     @classmethod
     def init_app(cls, app):
