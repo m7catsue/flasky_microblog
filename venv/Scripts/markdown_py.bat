@@ -1,0 +1,1 @@
+@"c:\users\luyaxin\pycharmprojects\flasky_social_blogging\venv\scripts\python.exe" "c:\users\luyaxin\pycharmprojects\flasky_social_blogging\venv\Scripts\markdown_py" %*
