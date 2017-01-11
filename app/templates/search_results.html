@@ -6,11 +6,19 @@
 {% block page_content %}
 <h1>Search Results for "{{ query }}":</h1>
 
+{% if not posts %}
+<p>Opps, it seems that there are no posts about "{{ query }}"...</p>
+{% else %}
+<p>All posts about "{{ query }}" are shown below.</p>
+{% endif %}
+
 {% include '_posts.html' %}
+
 {% if pagination %}
 <div class="pagination">
     {{ macros.pagination_widget(pagination, 'main.search_results', query=query) }}
 </div>
 {% endif %}
+
 {% endblock %}
 

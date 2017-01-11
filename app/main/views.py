@@ -12,7 +12,7 @@ from ..decorators import admin_required, permission_required
 
 
 #################################################################################################################
-# 测试部分使用
+# 供测试部分使用
 
 @main.after_app_request                                                 # 在视图函数处理完请求之后执行
 def after_request(response):

@@ -33,8 +33,11 @@
                 <li><a href="{{ url_for('main.moderate') }}">Moderate Comments</a></li>
                 {% endif %}
                 {% if current_user.is_authenticated %}
-                <li>
-                <form style="display: inline;" action="{{url_for('main.search')}}" method="post" name="search">{{g.search_form.hidden_tag()}}{{g.search_form.search(size=20)}}<input type="submit" value="Search"></form>
+                <li id="search_bar">
+                    <form id="search_form" style="display: inline;text-align: center" action="{{url_for('main.search')}}" method="post" name="search">
+                        {{g.search_form.hidden_tag()}}{{g.search_form.search(size=20)}}
+                        <input id="search_submit" type="submit" value="Search">
+                    </form>
                 </li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -47,6 +50,7 @@
                         <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
                     </ul>
                 </li>
+
                 {% else %}
                 <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
                 {% endif %}

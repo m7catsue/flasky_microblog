@@ -41,9 +41,6 @@ div.post-content {
 div.post-footer {
     text-align: right;
 }
-div.comment-footer {
-    text-align: right;
-}
 ul.comments {
     list-style-type: none;
     padding: 0px;
@@ -108,3 +105,22 @@ div.flask-pagedown-preview h3 {
 .table.followers tr {
     border-bottom: 1px solid #e0e0e0;
 }
+
+
+
+div.comment-footer {
+    text-align: right;
+}
+li#search_bar {
+    padding: 10px;
+}
+form#search_form {
+    font-style: italic;
+}
+input#search_submit {
+    font-style: italic;
+    color: blue;
+}
+
+
+
